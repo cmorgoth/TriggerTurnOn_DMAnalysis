@@ -7,8 +7,10 @@
 #include "TRandom3.h"
 #include "TEfficiency.h"
 #include "TCanvas.h"
+#include "TPad.h"
 #include "TLatex.h"
 #include "TString.h"
+#include "TGraphAsymmErrors.h"
 #include <vector>
 #include <iostream>
 #include "DM_2DRatio.hh"
@@ -40,8 +42,6 @@ int main(){
   const double RSQ_BinArr[] = {0.3, 0.4, 0.5, 0.6, 2.5};//Ele
   const double MR_BinArr[] = {200., 300., 400., 3500.};//Ele
 
-  //TFile* f = new TFile("/media/data/cmorgoth/Data/DMData/TriggerData/DoubleMu_ABCD_ILV.root");
-  //TFile* f = new TFile("/media/data/cmorgoth/Data/DMData/TriggerData/DoubleEle_ABCD_ILV.root");
   TFile* f = new TFile("/media/data/cmorgoth/Data/DMData/TriggerData/SingleEle_ILV_ABCD_NOELEVETO.root");
   TTree* t = (TTree*)f->Get("outTree");
   
@@ -70,16 +70,15 @@ int main(){
   TH1F* R2n1 = new TH1F("R2n1","Elehad-Turn-On-R2", 4, RSQ_BinArr);
   TH1F* R2d1 = new TH1F("R2d1","Elehad-Turn-On-R2-Den", 4, RSQ_BinArr);
 
-  std::cout << "Nentries: " << t->GetEntries() << std::endl;
+  //std::cout << "Nentries: " << t->GetEntries() << std::endl;
   
   for(int i = 0; i < t->GetEntries(); i++ ){
     t->GetEntry(i);
-    if( RSQ[2] >= 0.30 && MR[2] >= 200. && BOX > 0){
+    if( RSQ[2] >= 0.30 && MR[2] >= 200. && BOX == 0){
       den1->Fill(MR[2], RSQ[2]);
       MRd1->Fill(MR[2]);
       R2d1->Fill(RSQ[2]);
       if( HLT_Razor == 1 ){
-	//std::cout << "pass" << std::endl;
 	num1->Fill(MR[2], RSQ[2]);
 	MRn1->Fill(MR[2]);
 	R2n1->Fill(RSQ[2]);
@@ -87,11 +86,6 @@ int main(){
     }
     
   }
-  
-  //t->Draw("RSQ[2]:MR[2]>>tmp1(50,200,2000,50, 0.5, 1.5)", "RSQ[2]>=0.5 && MR[2]>=200. && passedHLT==1", "goff");
-  //num = (TH2F*)gDirectory->Get("tmp1");
-  //t->Draw("RSQ[2]:MR[2]>>tmp2(50,200,2000,50, 0.5, 1.5)", "RSQ[2]>=0.5 && MR[2]>=200.", "goff");
-  //TH2F* den = (TH2F*)gDirectory->Get("tmp2");
   
   num1->Sumw2();
   den1->Sumw2();
@@ -103,13 +97,12 @@ int main(){
   num1->SetNameTitle("h", "h1");
   num1->SetStats(0);
   num1->Draw("colz");
-  //RatioPlotsTwoD(num1, den1, "RatioSingleEle_errors", "den");
-  C1->SaveAs("SingleEle_trigger_2d_mr200_ABCD_PT80v2Eleon.png");
-  C1->SaveAs("SingleEle_trigger_2d_mr200_ABCD_PT80v2Eleon.pdf");
+  C1->SaveAs("SingleElectronPD_2d_Trigger.png");
+  C1->SaveAs("SingleElectronPD_2d_Trigger.pdf");
 
   pEff2->Draw("colz");
-  C1->SaveAs("SingleEff_Tets_2d.pdf");
-  C1->SaveAs("SingleEff_Tets_2d.png");
+  C1->SaveAs("EleEff_2d.pdf");
+  C1->SaveAs("EleEff_2d.png");
 
   TString s;
   TString s1;
@@ -124,9 +117,7 @@ int main(){
   s1 += MRd1->Integral();
   std::cout << s << std::endl;
   std::cout << s1 << std::endl;
-  std::cout << "Den BinContent(4): " << MRn1->GetBinContent(4) << std::endl;
-  std::cout << "Den BinContent(4): " << MRd1->GetBinContent(4) << std::endl;
-
+  
   MRn1->Divide(MRd1);
   MRn1->SetStats(0);
   MRn1->SetMarkerStyle(24);
@@ -141,7 +132,7 @@ int main(){
   tex->SetNDC();
   tex->SetTextAlign(22);
   tex->SetTextSizePixels(22);
-  tex->DrawLatex(0.8,0.8,"R^{2} > 0.35");
+  tex->DrawLatex(0.8,0.8,"R^{2} > 0.3");
   delete tex;
   
   tex = new TLatex();
@@ -158,13 +149,42 @@ int main(){
   tex->DrawLatex(0.7,0.2,s1);
   
 
-  C1->SaveAs("SingleEle_trigger_MR_mr200_ABCD_PT80v2Eleon.png");
-  C1->SaveAs("SingleEle_trigger_MR_mr200_ABCD_PT80v2Eleon.pdf");
+  C1->SaveAs("SingleElectronPDTrigger_MR.png");
+  C1->SaveAs("SingleElectronPDTrigger_MR.pdf");
   delete tex;
 
   pEff3->Draw();
-  C1->SaveAs("SingleEff_Tets_MR.pdf");
-  C1->SaveAs("SingleEff_Tets_MR.png");
+  pEff3->SetMarkerStyle(24);
+  pEff3->SetMarkerSize(1.5);
+  pEff3->SetMarkerColor(4);
+  pEff3->SetLineColor(4);
+  pEff3->SetTitle(";M_{R};");
+  pEff3->Draw();
+  gPad->Update();
+  pEff3->GetPaintedGraph()->GetXaxis()->SetTitle("M_{R}");
+  
+  tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextAlign(22);
+  tex->SetTextSizePixels(22);
+  tex->DrawLatex(0.8,0.6,"R^{2} > 0.3");
+  delete tex;
+  
+  tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextAlign(22);
+  tex->SetTextSizePixels(10);
+  tex->DrawLatex(0.7,0.3,s);
+  delete tex;
+  
+  tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextAlign(22);
+  tex->SetTextSizePixels(10);
+  tex->DrawLatex(0.7,0.2,s1);
+  delete tex;
+  C1->SaveAs("EleEff_MR.pdf");
+  C1->SaveAs("EleEff_MR.png");
   
   R2n1->Sumw2();
   R2d1->Sumw2();
@@ -208,13 +228,41 @@ int main(){
 
 
   
-  C1->SaveAs("SingleEle_trigger_R2_mr200_ABCD_PT80v2Eleon.png");
-  C1->SaveAs("SingleEle_trigger_R2_mr200_ABCD_PT80v2Eleon.pdf");
+  C1->SaveAs("SingleElectronPDTrigger_MR.png");
+  C1->SaveAs("SingleElectronPDTrigger_MR.pdf");
   delete tex;
 
+  pEff4->SetMarkerStyle(24);
+  pEff4->SetMarkerSize(1.5);
+  pEff4->SetMarkerColor(4);
+  pEff4->SetLineColor(4);
+  pEff4->SetTitle(";M_{R};");
   pEff4->Draw();
-  C1->SaveAs("Eff_Tets_R2.pdf");
-  C1->SaveAs("Eff_Tets_R2.png");
+  gPad->Update();
+  pEff4->GetPaintedGraph()->GetXaxis()->SetTitle("R^{2}");
+  
+  tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextAlign(22);
+  tex->SetTextSizePixels(22);
+  tex->DrawLatex(0.8,0.6,"M_{R} > 200");
+  delete tex;
+  
+  tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextAlign(22);
+  tex->SetTextSizePixels(10);
+  tex->DrawLatex(0.7,0.3,s);
+  delete tex;
+  
+  tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextAlign(22);
+  tex->SetTextSizePixels(10);
+  tex->DrawLatex(0.7,0.2,s1);
+  delete tex;
+  C1->SaveAs("EleEff_R2.pdf");
+  C1->SaveAs("EleEff_R2.png");
 
   
   std::cout << "ll " << num1->GetBinContent(3,3) << std::endl;
@@ -224,12 +272,12 @@ int main(){
   for(int j = 0; j < 100; j++){
     double mr = r->Uniform(200.,2000.);
     double rsq = r->Uniform(0.2, 1.5);
-    std::cout << "MR:  " << mr << " R2: "  << rsq << "  find bin: " << FindBin(mr,rsq) << std::endl;
-    if( FindBin(mr,rsq) == 0 )std::cout << "bad" << std::endl;
+    //std::cout << "MR:  " << mr << " R2: "  << rsq << "  find bin: " << FindBin(mr,rsq) << std::endl;
+    //if( FindBin(mr,rsq) == 0 )std::cout << "bad" << std::endl;
   }
   
   
-  TFile* f1 = new TFile("hlt_eff_SignleEle.root", "RECREATE");
+  TFile* f1 = new TFile("hlt_eff_SignleElePD.root", "RECREATE");
   //num->Write("h");
   num1->Write();
   R2n1->Write();
